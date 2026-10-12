@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F0B90B">
+<title>12-week ride and lift plan</title>
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #EDF0F2; --surface: #FFFFFF; --surface2: #F5F7F8; --ink: #14212B; --muted: #596975;
+  --line: #D3DAE0; --accent: #F0B90B; --on-accent: #14212B;
+  --ride: #17707F; --lift: #5B4B9A; --ok: #2E7D4F; --warn: #B3541E;
+  --display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", system-ui, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10181F; --surface: #172530; --surface2: #1D2E3B; --ink: #E8EEF2; --muted: #93A4B0;
+    --line: #2A3B48; --accent: #F2B705; --on-accent: #14212B;
+    --ride: #55BBCB; --lift: #B0A4E6; --ok: #6FCB93; --warn: #F0955C;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10181F; --surface: #172530; --surface2: #1D2E3B; --ink: #E8EEF2; --muted: #93A4B0;
+  --line: #2A3B48; --accent: #F2B705; --on-accent: #14212B;
+  --ride: #55BBCB; --lift: #B0A4E6; --ok: #6FCB93; --warn: #F0955C;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 110px); }
+html { -webkit-tap-highlight-color: transparent; }
+button, input, label { touch-action: manipulation; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+h1, h2, h3, h4 { font-family: var(--display); font-weight: 700; font-stretch: condensed; margin: 0; line-height: 1.05; letter-spacing: .005em; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 16px calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); padding: 14px 0 8px; border-bottom: 1px solid var(--line); }
+.title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.title-row h1 { font-size: 30px; font-weight: 700; }
+.status { font-size: 13px; color: var(--muted); }
+
+/* the road: week strip */
+.road { position: relative; margin-top: 10px; }
+.road::before { content: ""; position: absolute; left: 0; right: 0; top: 21px; height: 0; border-top: 3px dashed var(--line); z-index: 0; }
+.strip { position: relative; display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; z-index: 1; }
+.strip::-webkit-scrollbar { display: none; }
+.wk { flex: 1 0 44px; min-width: 44px; border: 0; background: transparent; padding: 0; text-align: center; }
+.wk .num { display: grid; place-items: center; width: 40px; height: 40px; margin: 0 auto; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); font-family: var(--display); font-size: 20px; font-weight: 600; }
+.wk.easy .num { border-style: dashed; }
+.wk.partial .num { border-color: var(--ride); }
+.wk.done .num { background: var(--ok); border-color: var(--ok); color: #fff; }
+.wk.active .num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); transform: scale(1.12); }
+.wk .bar { display: block; height: 3px; width: 28px; margin: 5px auto 0; background: var(--line); border-radius: 2px; overflow: hidden; }
+.wk .bar i { display: block; height: 100%; background: var(--ok); }
+
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; background: var(--surface); border-top: 1px solid var(--line); padding: 0 8px env(safe-area-inset-bottom, 0px); }
+.tab { flex: 1; max-width: 260px; border: 0; background: transparent; padding: 10px 8px; font-weight: 600; font-size: 15px; color: var(--muted); border-top: 4px solid transparent; min-height: 54px; }
+.tab[aria-selected="true"] { color: var(--ink); border-top-color: var(--accent); }
+
+/* week header */
+.week-head { margin: 22px 0 6px; display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 16px; }
+.week-head h2 { font-size: 54px; font-weight: 700; }
+.week-head h2 small { font-size: 22px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 14px; font-weight: 600; background: var(--surface2); border: 1px solid var(--line); }
+.badge.easy { background: transparent; border: 1px dashed var(--muted); }
+.lede { margin: 0 0 8px; color: var(--muted); max-width: 62ch; }
+
+.section-h { display: flex; align-items: center; gap: 10px; margin: 30px 0 10px; }
+.section-h h2 { font-size: 30px; }
+.section-h .dot { width: 14px; height: 14px; border-radius: 3px; }
+.section-h.ride .dot { background: var(--ride); }
+.section-h.lift .dot { background: var(--lift); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+.card.ride { border-left: 5px solid var(--ride); }
+.card.lift { border-left: 5px solid var(--lift); }
+.card.optional { border-left-style: dashed; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 14px; }
+.card-head h3 { font-size: 24px; }
+.plan { font-weight: 600; font-size: 15px; }
+.plan span { font-weight: 400; color: var(--muted); }
+.how { margin: 6px 0 12px; color: var(--muted); font-size: 15px; max-width: 70ch; }
+
+.fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+label.f { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); }
+input[type="number"], input[type="text"], textarea {
+  font: inherit; font-size: 17px; color: var(--ink); background: var(--surface2);
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-height: 44px; width: 100%;
+}
+input[type="number"] { font-variant-numeric: tabular-nums; }
+textarea { min-height: 76px; resize: vertical; }
+.result { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-top: 10px; font-size: 15px; }
+.result b { font-family: var(--display); font-size: 22px; font-weight: 600; }
+.hint { color: var(--warn); font-weight: 500; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; min-height: 44px; }
+input[type="checkbox"] { width: 24px; height: 24px; accent-color: var(--ok); margin: 0; }
+
+/* lifting */
+.session-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin: 24px 0 8px; }
+.session-head h3 { font-size: 28px; }
+.session-head span { color: var(--muted); font-size: 15px; }
+details.gen { margin-bottom: 12px; font-size: 15px; }
+details.gen summary, details.wu summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+details.gen p { margin: 4px 0 0; color: var(--muted); }
+.wu { margin: 4px 0 10px; background: var(--surface2); border-radius: 8px; padding: 6px 12px; }
+.wu table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 4px 0 6px; }
+.wu th, .wu td { text-align: left; padding: 4px 6px 4px 0; font-variant-numeric: tabular-nums; }
+.wu th { font-weight: 500; color: var(--muted); font-size: 13px; }
+.wu .rest { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.sethead, .set { display: grid; grid-template-columns: 28px 1fr 18px 1fr 52px; gap: 8px; align-items: center; }
+.sethead { font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+.set { margin-bottom: 6px; }
+.set .n { font-family: var(--display); font-size: 20px; color: var(--muted); }
+.set .x { color: var(--muted); text-align: center; }
+.set .ck { display: grid; place-items: center; }
+.set.done input[type="number"] { border-color: var(--ok); }
+.ghost { margin-top: 6px; border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 8px 12px; min-height: 40px; font-size: 14px; font-weight: 600; }
+.ghost:hover { background: var(--surface2); }
+.primary { border: 0; background: var(--accent); color: var(--on-accent); border-radius: 8px; padding: 10px 16px; min-height: 44px; font-weight: 600; }
+
+.knee { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+.knee button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; min-height: 44px; font-weight: 500; }
+.knee button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* tables */
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table.grid { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 520px; font-variant-numeric: tabular-nums; }
+table.grid th, table.grid td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.grid th { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--surface2); position: sticky; top: 0; }
+table.grid tr:last-child td { border-bottom: 0; }
+table.grid tr.easyrow td { background: var(--surface2); }
+table.grid tr.cur td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+table.grid button.jump { background: none; border: 0; padding: 4px 0; min-height: 32px; font-family: var(--display); font-size: 20px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.actual { display: block; font-size: 13px; color: var(--ok); font-weight: 600; }
+.pending { display: block; font-size: 13px; color: var(--muted); }
+.note-small { color: var(--muted); font-size: 14px; margin: 8px 0 0; max-width: 70ch; }
+
+.guide h3 { font-size: 24px; margin: 26px 0 8px; }
+.guide ul { margin: 0; padding-left: 20px; max-width: 70ch; }
+.guide li { margin-bottom: 6px; }
+.hide { display: none !important; }
+.adj { margin: 0 0 10px; font-size: 14px; color: var(--ok); font-weight: 600; }
+.adj.hold { color: var(--warn); }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+table.grid td:first-child, table.grid th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+table.grid th:first-child { background: var(--surface2); z-index: 2; }
+table.grid tr.easyrow td:first-child { background: var(--surface2); }
+
+@media (max-width: 560px) {
+  .wrap { padding-left: 12px; padding-right: 12px; }
+  .title-row h1 { font-size: 24px; }
+  .top { padding-top: 10px; }
+  .week-head { margin-top: 16px; }
+  .week-head h2 { font-size: 42px; }
+  .section-h h2 { font-size: 26px; }
+  .card { padding: 12px; }
+  .card-head h3 { font-size: 22px; }
+  .fields { grid-template-columns: 1fr 1fr; }
+  .sethead, .set { grid-template-columns: 24px 1fr 12px 1fr 44px; gap: 6px; }
+  .set input[type="number"] { padding: 9px 4px; text-align: center; }
+  .wk { flex: 0 0 44px; }
+  .knee button { flex: 1 1 100%; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="title-row">
+      <h1>Ride and lift, 12 weeks</h1>
+      <div class="status" id="status" role="status">Loading…</div>
+    </div>
+    <div class="road"><div class="strip" id="strip" role="tablist" aria-label="Weeks"></div></div>
+  </div>
+  <main id="app"></main>
+</div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="week" aria-selected="true">This week</button>
+    <button class="tab" role="tab" data-tab="all" aria-selected="false">All 12 weeks</button>
+    <button class="tab" role="tab" data-tab="guide" aria-selected="false">Guide</button>
+</nav>
+
+
+<script>
+"use strict";
+/* ---------- plan data ---------- */
+const BAR = 20;
+const PLATES = [25, 20, 10, 5, 2.5, 1.25]; // one pair of each
+const EASY = [4, 8, 12];
+const P = {
+  squatMon: [50,55,60,60,65,70,75,75,80,82.5,85,85],
+  squatFri: [40,45,50,50,52.5,57.5,60,60,65,65,67.5,67.5],
+  bench:    [32.5,35,37.5,37.5,40,42.5,45,45,47.5,50,50,50],
+  row:      [32.5,35,37.5,37.5,40,42.5,45,45,47.5,50,50,50],
+  ohp:      [20,22.5,22.5,22.5,25,25,27.5,27.5,30,30,32.5,32.5],
+  rdl:      [40,45,50,50,55,60,65,65,70,75,80,80]
+};
+const TUE = [45,45,50,35,50,50,55,40,60,60,60,40];
+const SUN = [80,85,95,65,100,110,120,80,130,140,150,90];
+const THU = [[3,4],[3,4],[3,5],[2,5],[3,5],[4,5],[4,5],[2,5],[4,5],[4,5],["4–5",5],null];
+
+const isEasy = w => EASY.includes(w);
+const KEYMAP = { "A-squat": "squatMon", "B-squat": "squatFri", "A-bench": "bench", "A-row": "row", "B-ohp": "ohp", "B-rdl": "rdl" };
+const SETS0 = { "A-squat": [3, 5], "A-bench": [3, 5], "A-row": [3, 5], "B-squat": [2, 5], "B-ohp": [3, 5], "B-rdl": [2, 6] };
+const roundKg = k => Math.max(BAR, Math.round(k / 2.5) * 2.5);
+/* Weight for a barbell lift in week w. Uses the base plan, but if you logged this lift
+   in an earlier week it builds from what you actually lifted:
+   all sets done at target reps -> last weight + the planned step; otherwise hold. */
+function adjKg(w, id) {
+  const base = P[KEYMAP[id]], staticKg = base[w - 1];
+  for (let u = w - 1; u >= 1; u--) {
+    const L = state.logs[u], arr = L && L.lifts && L.lifts[id];
+    const done = arr ? arr.filter(x => x.done) : [];
+    if (!done.length) continue;
+    const n0 = SETS0[id][0], target = SETS0[id][1];
+    const sets = isEasy(u) ? Math.max(1, n0 - 1) : n0;
+    const used = Math.max(...done.map(x => { const k = num(x.kg); return k !== null ? k : adjKg(u, id).kg; }));
+    const ok = done.length >= sets && done.every(x => { const r = num(x.reps); return r === null || r >= target; });
+    const knee = L.knee === "swollen";
+    const wkTxt = "week " + u;
+    if (ok && !knee) {
+      const step = Math.max(0, staticKg - base[u - 1]);
+      const kg = roundKg(used + step);
+      return { kg, adjusted: kg !== staticKg, hold: false,
+        why: "From " + wkTxt + ": " + fmt(used) + " kg, all reps done. " + (step ? "Adding " + fmt(step) + " kg." : "Keeping the same weight.") };
+    }
+    return { kg: roundKg(used), adjusted: roundKg(used) !== staticKg, hold: true,
+      why: knee ? "Holding " + fmt(used) + " kg because your knee was flagged in " + wkTxt + "." : "Holding " + fmt(used) + " kg: not every set and rep was completed in " + wkTxt + "." };
+  }
+  return { kg: staticKg, adjusted: false, hold: false, why: "" };
+}
+const fmt = n => (Math.round(n * 100) / 100).toString();
+function perSide(kg) {
+  let r = (kg - BAR) / 2;
+  if (r <= 0.001) return "bar only";
+  const out = [];
+  for (const p of PLATES) if (r >= p - 1e-9) { out.push(p); r -= p; }
+  return out.join(" + ") + (r > 0.01 ? " (approx.)" : "") + " per side";
+}
+function warmups(kg) {
+  if (kg <= BAR) return [];
+  const list = [{ kg: BAR, reps: 10 }];
+  for (const [p, reps] of [[0.5, 5], [0.7, 3], [0.85, 1]]) {
+    const w = Math.round(kg * p / 2.5) * 2.5;
+    if (w > list[list.length - 1].kg && w < kg) list.push({ kg: w, reps });
+  }
+  return list;
+}
+
+/* ---------- build a week's data ---------- */
+function ridesFor(w) {
+  const i = w - 1, r = [];
+  r.push({ key: "tue", day: "Tuesday", title: "Endurance ride", plan: TUE[i] + " min easy",
+    how: "Easy spinning, HR 125–145, cadence 80–95 rpm. You should be able to speak full sentences. Ignore speed.", easy: true, req: true });
+  const t = THU[i];
+  if (t) r.push({ key: "thu", day: "Thursday", title: "Interval ride", plan: t[0] + " × " + t[1] + " min hard",
+    how: "10–15 min easy warm-up, then " + t[0] + " × " + t[1] + " min at HR 150–160 (RPE 6, comfortably hard), 3 min easy between, 10–15 min cool-down. Keep cadence above 80 rpm and avoid grinding up hills.", easy: false, req: true });
+  else r.push({ key: "thu", day: "Thursday", title: "No intervals", plan: "optional 30 min easy",
+    how: "Recovery week. Skip intervals. A 30 min easy spin is fine if your legs feel good.", easy: true, req: false });
+  r.push({ key: "sun", day: "Sunday", title: "Long ride", plan: SUN[i] + " min easy",
+    how: "Easy, HR 125–145, conversational." + (SUN[i] > 90 ? " Over 90 min: bring food and water." : "") + " Add roughly 10% per week at most; repeat a week if it felt hard.", easy: true, req: true });
+  if (isEasy(w)) r.push({ key: "sat", day: "Saturday", title: "Benchmark ride", plan: "your 1 hr route, easy",
+    how: "Repeat your usual 1 hr / 21 km route at HR 125–145. Log time, distance and average HR. A higher speed at the same HR means you're fitter.", easy: true, req: false, optional: true });
+  else if (w >= 5) r.push({ key: "sat", day: "Saturday", title: "Optional recovery spin", plan: "30 min very easy",
+    how: "Only if you feel fresh. Skip it in any week you feel flat.", easy: true, req: false, optional: true });
+  return r;
+}
+
+function liftsFor(w) {
+  const i = w - 1, e = isEasy(w);
+  const s = n => e ? Math.max(1, n - 1) : n;
+  const A = [
+    { id: "A-squat", name: "Back squat", bar: true, sets: s(3), reps: 5, kg: P.squatMon[i], note: "Set the rack's safety pins just below your bottom position." },
+    { id: "A-bench", name: "Bench press", bar: true, sets: s(3), reps: 5, kg: P.bench[i], note: "Safety pins just above your chest at the bottom." },
+    { id: "A-row", name: "Barbell bent-over row", bar: true, sets: s(3), reps: 5, kg: P.row[i], note: "Flat back, pull to lower ribs. Use a one-arm dumbbell row if your back is tired." },
+    { id: "A-ham", name: "Towel hamstring slides", sets: s(3), reps: 7, repsLabel: "6–8", unit: "bodyweight", note: "Feet on a towel on a smooth floor. Take 3 seconds to lower." },
+    { id: "A-plank", name: "Side plank (each side)", sets: s(2), reps: 35, repsLabel: "30–40 s", noLoad: true, repUnit: "sec", note: "" }
+  ];
+  const B = [
+    { id: "B-squat", name: "Back squat (lighter)", bar: true, sets: s(2), reps: 5, kg: P.squatFri[i], note: "Moderate load; Sunday's long ride is coming." },
+    { id: "B-ohp", name: "Overhead press", bar: true, sets: s(3), reps: 5, kg: P.ohp[i], note: "Squeeze glutes, ribs down, bar over mid-foot." },
+    { id: "B-rdl", name: "Romanian deadlift", bar: true, sets: s(2), reps: 6, kg: P.rdl[i], note: "Hips back, slight knee bend, bar close to legs. Stop when your hamstrings are stretched." },
+    { id: "B-split", name: "Rear-foot-elevated split squat", sets: s(3), reps: 8, repsLabel: "8 per leg", unit: "dumbbells, kg each", note: "Back foot on the bench. Start bodyweight in week 1, then add dumbbells." },
+    { id: "B-calf", name: "Single-leg calf raise", sets: s(2), reps: 12, repsLabel: "12 per leg", unit: "dumbbell, kg", note: "" },
+    { id: "B-dead", name: "Dead bug (each side)", sets: s(2), reps: 10, repsLabel: "10 per side", noLoad: true, note: "" }
+  ];
+  [A, B].forEach(list => list.forEach(x => { if (x.bar) { const a = adjKg(w, x.id); x.kg = a.kg; x.why = a.why; x.hold = a.hold; } }));
+  return [
+    { key: "A", day: "Monday", title: "Strength A", ex: A },
+    { key: "B", day: "Friday", title: "Strength B", ex: B }
+  ];
+}
+
+/* ---------- state ---------- */
+const LS_KEY = "ride-lift-tracker-v1";
+let state = { week: 1, tab: "week", logs: {} };
+let dirty = false, dbRef = null, downloads = null, saveTimer = null;
+
+function curWeek() { return state.week; }
+function wlog(w) { return state.logs[w] || (state.logs[w] = { rides: {}, lifts: {}, knee: "", notes: "" }); }
+function rlog(w, k) { const L = wlog(w); return L.rides[k] || (L.rides[k] = { done: false, min: "", km: "", avg: "", max: "" }); }
+function llog(w, id, n) {
+  const L = wlog(w);
+  if (!L.lifts[id]) L.lifts[id] = [];
+  while (L.lifts[id].length < n) L.lifts[id].push({ kg: "", reps: "", done: false });
+  return L.lifts[id];
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function num(v) { const n = parseFloat(v); return isFinite(n) ? n : null; }
+
+/* progress for a week: share of required rides + main lifts ticked */
+function progress(w) {
+  const L = state.logs[w]; if (!L) return 0;
+  const rides = ridesFor(w).filter(r => r.req);
+  let total = rides.length, got = 0;
+  rides.forEach(r => { if (L.rides[r.key] && L.rides[r.key].done) got++; });
+  liftsFor(w).forEach(s => {
+    total++;
+    const mains = s.ex.filter(x => x.bar);
+    const ok = mains.every(x => { const a = L.lifts[x.id]; return a && a.slice(0, x.sets).filter(z => z.done).length >= x.sets; });
+    if (ok) got++;
+  });
+  return total ? got / total : 0;
+}
+
+/* ---------- persistence ---------- */
+let storageOK = true;
+try { localStorage.setItem("__t", "1"); localStorage.removeItem("__t"); } catch (e) { storageOK = false; }
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+function setStatus(t) { document.getElementById("status").textContent = t; }
+function localMsg() { return storageOK ? "Saved on this device" : "Not saving: use Back up"; }
+function save() {
+  dirty = true; setStatus("Saving…");
+  clearTimeout(saveTimer); saveTimer = setTimeout(persist, 500);
+}
+async function persist() {
+  const json = JSON.stringify(state);
+  try { localStorage.setItem(LS_KEY, json); } catch (e) {}
+  if (dbRef) {
+    try { await dbRef.set({ json }); setStatus("Saved to your account"); return; } catch (e) {}
+  }
+  setStatus(localMsg());
+}
+function loadLocal() {
+  try { const j = localStorage.getItem(LS_KEY); if (j) { const s = JSON.parse(j); if (s && s.logs) return s; } } catch (e) {}
+  return null;
+}
+async function initRuntime() {
+  try {
+    if (!window.claude || !claude.use) { setStatus(localMsg()); return; }
+    try { downloads = await claude.use("downloads"); } catch (e) {}
+    const db = await claude.use("db"), user = await claude.use("user");
+    if (db && user) {
+      const id = await user.id();
+      if (id) {
+        dbRef = db.doc("data/users/" + id + "/training");
+        const snap = await dbRef.get();
+        if (snap.exists && !dirty) {
+          const s = JSON.parse(snap.data().json);
+          if (s && s.logs) { state = s; render(); }
+        }
+        setStatus("Saved to your account"); return;
+      }
+    }
+    setStatus(localMsg());
+  } catch (e) { setStatus(localMsg()); }
+}
+
+/* ---------- rendering ---------- */
+const $app = document.getElementById("app");
+const $strip = document.getElementById("strip");
+
+function renderStrip() {
+  $strip.innerHTML = "";
+  for (let w = 1; w <= 12; w++) {
+    const p = progress(w);
+    const b = document.createElement("button");
+    b.className = "wk" + (isEasy(w) ? " easy" : "") + (w === state.week ? " active" : "") + (p >= 0.99 ? " done" : p > 0 ? " partial" : "");
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", w === state.week ? "true" : "false");
+    b.setAttribute("aria-label", "Week " + w + (isEasy(w) ? ", easy week" : ""));
+    b.dataset.week = w;
+    b.innerHTML = '<span class="num">' + w + '</span><span class="bar"><i style="width:' + Math.round(p * 100) + '%"></i></span>';
+    $strip.appendChild(b);
+  }
+}
+
+function rideCard(w, r) {
+  const L = rlog(w, r.key);
+  const f = (k, label, step) => '<label class="f">' + label + '<input type="number" inputmode="decimal" min="0" step="' + step + '" data-t="ride" data-r="' + r.key + '" data-f="' + k + '" value="' + esc(L[k]) + '"></label>';
+  return '<article class="card ride' + (r.optional ? " optional" : "") + '">' +
+    '<div class="card-head"><h3>' + r.day + ": " + r.title + '</h3><div class="plan">' + r.plan + '</div></div>' +
+    '<p class="how">' + r.how + '</p>' +
+    '<div class="fields">' + f("min", "Time (min)", "1") + f("km", "Distance (km)", "0.1") + f("avg", "Average HR", "1") + f("max", "Max HR", "1") + '</div>' +
+    '<div class="result"><span>Average speed <b id="spd-' + r.key + '">–</b> km/h</span><span class="hint" id="hint-' + r.key + '"></span>' +
+    '<label class="check"><input type="checkbox" data-t="ride" data-r="' + r.key + '" data-f="done"' + (L.done ? " checked" : "") + '> Done</label></div>' +
+    '</article>';
+}
+
+function exCard(w, s, x) {
+  const log = llog(w, x.id, x.sets);
+  const unitHint = x.bar ? "" : "";
+  let planTxt = x.sets + " × " + (x.repsLabel || x.reps);
+  let plates = "";
+  if (x.bar) { planTxt += " @ " + fmt(x.kg) + " kg"; plates = " (" + perSide(x.kg) + ")"; }
+  else if (x.unit) planTxt += " · " + x.unit;
+  let wu = "";
+  if (x.bar) {
+    const list = warmups(x.kg);
+    if (list.length) {
+      wu = '<details class="wu"><summary>Warm-up sets</summary><table><thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th>Plates</th></tr></thead><tbody>' +
+        list.map((u, i) => "<tr><td>W" + (i + 1) + "</td><td>" + fmt(u.kg) + " kg</td><td>" + u.reps + "</td><td>" + perSide(u.kg).replace(" per side", "") + "</td></tr>").join("") +
+        '</tbody></table><p class="rest">Rest 60–90 s between warm-ups, then 2–3 min before your first working set. Fast, crisp reps; no fatigue.</p></details>';
+    } else {
+      wu = '<details class="wu"><summary>Warm-up sets</summary><p class="rest" style="margin:6px 0">The working weight is the empty bar. Do arm circles, then 1 × 10 with light dumbbells (2–5 kg) or a resistance band.</p></details>';
+    }
+  }
+  let rows = '<div class="sethead"><span></span><span>' + (x.noLoad ? "" : (x.bar ? "kg" : "kg (optional)")) + '</span><span></span><span>' + (x.repUnit === "sec" ? "seconds" : "reps") + '</span><span>done</span></div>';
+  for (let i = 0; i < x.sets; i++) {
+    const s0 = log[i];
+    const wInp = x.noLoad ? "<span></span>" :
+      '<input type="number" inputmode="decimal" min="0" step="0.5" placeholder="' + (x.bar ? fmt(x.kg) : "BW") + '" aria-label="Set ' + (i + 1) + ' weight in kilograms" data-t="lift" data-ex="' + x.id + '" data-n="' + x.sets + '" data-i="' + i + '" data-f="kg" value="' + esc(s0.kg) + '">';
+    rows += '<div class="set' + (s0.done ? " done" : "") + '"><span class="n">' + (i + 1) + '</span>' + wInp + '<span class="x">×</span>' +
+      '<input type="number" inputmode="numeric" min="0" step="1" placeholder="' + x.reps + '" aria-label="Set ' + (i + 1) + ' reps" data-t="lift" data-ex="' + x.id + '" data-n="' + x.sets + '" data-i="' + i + '" data-f="reps" value="' + esc(s0.reps) + '">' +
+      '<label class="ck"><input type="checkbox" aria-label="Set ' + (i + 1) + ' done" data-t="lift" data-ex="' + x.id + '" data-n="' + x.sets + '" data-i="' + i + '" data-f="done"' + (s0.done ? " checked" : "") + '></label></div>';
+  }
+  return '<article class="card lift"><div class="card-head"><h3>' + x.name + '</h3><div class="plan">' + planTxt + '<span>' + plates + '</span></div></div>' +
+    (x.note ? '<p class="how">' + x.note + '</p>' : '<p class="how"></p>') + (x.why ? '<p class="adj' + (x.hold ? ' hold' : '') + '">' + esc(x.why) + '</p>' : '') + wu + rows +
+    '<button class="ghost" data-act="fill" data-ex="' + x.id + '">Log as planned</button></article>';
+}
+
+function renderWeek() {
+  const w = state.week, e = isEasy(w), L = wlog(w);
+  const phase = e ? "Easy week" : (w <= 3 ? "Build, block 1" : w <= 7 ? "Build, block 2" : "Build, block 3");
+  let h = '<div class="week-head"><h2>Week ' + w + '<small>of 12</small></h2><span class="badge' + (e ? " easy" : "") + '">' + phase + '</span></div>';
+  h += '<p class="lede">' + (e
+    ? "Recovery week. Lifts keep the same weights but drop one set each. Rides are shorter and intervals are trimmed. Let your legs catch up."
+    : "Rides are easy except Thursday. Lift with 2–3 reps in reserve and stop a set early if the bar slows or your knee complains.") + '</p>';
+
+  h += '<div class="section-h ride"><span class="dot"></span><h2>Cycling</h2></div>';
+  ridesFor(w).forEach(r => { h += rideCard(w, r); });
+
+  h += '<div class="section-h lift"><span class="dot"></span><h2>Lifting</h2></div>';
+  liftsFor(w).forEach(s => {
+    h += '<div class="session-head"><h3>' + s.day + ": " + s.title + '</h3><span>35–45 min' + (s.key === "B" ? " · keep loads moderate before Sunday's ride" : "") + '</span></div>';
+    h += '<details class="gen"><summary>General warm-up (5 min)</summary><p>Easy spin or brisk walk, 10 bodyweight squats, 10 glute bridges, 10 hip circles each way, 5 slow lunges each leg. Then do the barbell warm-up sets before each lift.</p></details>';
+    s.ex.forEach(x => { h += exCard(w, s, x); });
+  });
+
+  h += '<div class="section-h"><h2>Check-in</h2></div>';
+  h += '<p class="lede" style="margin-bottom:4px">How did your knee feel this week?</p>';
+  h += '<div class="knee" role="group" aria-label="Knee check">' +
+    [["fine", "Fine"], ["twinge", "A twinge, settled quickly"], ["swollen", "Swelling or instability"]].map(a =>
+      '<button data-act="knee" data-v="' + a[0] + '" aria-pressed="' + (L.knee === a[0] ? "true" : "false") + '">' + a[1] + '</button>').join("") + '</div>';
+  h += '<div id="kneeWarn" class="hint" style="margin-bottom:8px">' + (L.knee === "swollen" ? "Hold the weights and ride easy next week. If it persists, see your physio." : "") + '</div>';
+  h += '<label class="f">Notes<textarea data-t="notes" placeholder="Sleep, heat, how the legs felt, anything to change next week">' + esc(L.notes) + '</textarea></label>';
+
+  h += '<div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap">' +
+    (w > 1 ? '<button class="ghost" data-week="' + (w - 1) + '">Previous week</button>' : "") +
+    (w < 12 ? '<button class="primary" data-week="' + (w + 1) + '">Next week</button>' : "") +
+    '</div>';
+  $app.innerHTML = h;
+  ridesFor(w).forEach(r => refreshRide(r.key));
+}
+
+function refreshRide(key) {
+  const L = rlog(state.week, key);
+  const min = num(L.min), km = num(L.km), avg = num(L.avg);
+  const spd = document.getElementById("spd-" + key), hint = document.getElementById("hint-" + key);
+  if (!spd) return;
+  spd.textContent = (min && km) ? (km / (min / 60)).toFixed(1) : "–";
+  const r = ridesFor(state.week).find(x => x.key === key);
+  hint.textContent = (r && r.easy && avg && avg > 145) ? "Average HR above 145 on an easy ride. Ease off next time, even on hills." : "";
+}
+
+function bestSet(w, id) {
+  const L = state.logs[w]; if (!L || !L.lifts[id]) return null;
+  let best = null;
+  L.lifts[id].forEach(s => { const k = num(s.kg); if (k !== null && (s.done || s.reps !== "") && (best === null || k > best.kg)) best = { kg: k, reps: s.reps }; });
+  return best;
+}
+
+function renderAll() {
+  const cur = state.week;
+  let h = '<div class="week-head"><h2>All 12 weeks</h2></div><p class="lede">Tap a week number to open it. Shaded rows are easy weeks. Green numbers are what you logged.</p>';
+  h += '<div class="section-h ride"><span class="dot"></span><h2>Cycling</h2></div><div class="scroll"><table class="grid"><thead><tr><th>Week</th><th>Tue easy</th><th>Thu intervals</th><th>Sun long</th><th>Logged</th></tr></thead><tbody>';
+  for (let w = 1; w <= 12; w++) {
+    const t = THU[w - 1];
+    const L = state.logs[w];
+    const done = ["tue", "thu", "sun"].filter(k => L && L.rides[k] && L.rides[k].done).length;
+    let extra = "";
+    if (L && L.rides.sat && num(L.rides.sat.min) && num(L.rides.sat.km) && isEasy(w)) {
+      const s = L.rides.sat; extra = '<span class="actual">Benchmark ' + (num(s.km) / (num(s.min) / 60)).toFixed(1) + ' km/h' + (num(s.avg) ? " @ " + s.avg + " bpm" : "") + '</span>';
+    }
+    h += '<tr class="' + (isEasy(w) ? "easyrow " : "") + (w === cur ? "cur" : "") + '"><td><button class="jump" data-week="' + w + '" data-tab="week">' + w + '</button></td>' +
+      '<td>' + TUE[w - 1] + ' min</td><td>' + (t ? t[0] + " × " + t[1] + " min" : "none") + '</td><td>' + SUN[w - 1] + ' min</td>' +
+      '<td>' + done + ' of ' + (t ? 3 : 2 + (done > 2 ? 1 : 0)) + extra + '</td></tr>';
+  }
+  h += '</tbody></table></div><p class="note-small">Intervals: HR 150–160 with 3 min easy between. Easy rides: HR 125–145. Week 4, 8 and 12 have a Saturday benchmark ride.</p>';
+
+  h += '<div class="section-h lift"><span class="dot"></span><h2>Lifting (kg)</h2></div><div class="scroll"><table class="grid"><thead><tr><th>Week</th><th>Squat Mon<br>3×5</th><th>Squat Fri<br>2×5</th><th>Bench<br>3×5</th><th>Row<br>3×5</th><th>OHP<br>3×5</th><th>RDL<br>2×6</th></tr></thead><tbody>';
+  const cols = [["squatMon", "A-squat"], ["squatFri", "B-squat"], ["bench", "A-bench"], ["row", "A-row"], ["ohp", "B-ohp"], ["rdl", "B-rdl"]];
+  for (let w = 1; w <= 12; w++) {
+    h += '<tr class="' + (isEasy(w) ? "easyrow " : "") + (w === cur ? "cur" : "") + '"><td><button class="jump" data-week="' + w + '" data-tab="week">' + w + '</button></td>';
+    cols.forEach(c => {
+      const b = bestSet(w, c[1]);
+      h += '<td>' + fmt(adjKg(w, c[1]).kg) + (b ? '<span class="actual">did ' + fmt(b.kg) + (b.reps !== "" ? " × " + b.reps : "") + '</span>' : "") + '</td>';
+    });
+    h += '</tr>';
+  }
+  h += '</tbody></table></div><p class="note-small">Planned weights update from what you log: finish every set at target reps and the next week adds the planned step; miss reps or flag your knee and the weight holds. Weeks you have not logged yet follow the base plan. Easy weeks keep the weights and drop one set.</p>';
+  h += dataCard();
+  $app.innerHTML = h;
+}
+
+function renderGuide() {
+  $app.innerHTML = '<div class="week-head"><h2>Guide</h2></div><div class="guide">' +
+    '<h3>Heart rate targets</h3><ul>' +
+    '<li><b>Easy rides (Tue, Sun, Sat):</b> 125–145 bpm. You can speak full sentences. Ignore speed; it will rise over the weeks.</li>' +
+    '<li><b>Intervals (Thu):</b> 150–160 bpm during the hard blocks (RPE 6, short sentences only). Easy spinning between.</li>' +
+    '<li><b>Heat:</b> hot, humid rides push HR up 5–10 bpm. Use the talk test alongside HR.</li>' +
+    '<li><b>Max HR:</b> your highest so far is 176. Treat any higher reading on a hard effort as your new max.</li></ul>' +
+    '<h3>Lifting rules</h3><ul>' +
+    '<li>Leave 2–3 reps in reserve. Stop a set early if the bar slows or form slips.</li>' +
+    '<li>Add weight only when you finish every set and rep cleanly. Squat and RDL can move 2.5–5 kg a week early on.</li>' +
+    '<li>Miss reps in two sessions in a row: drop 10% and build back up.</li>' +
+    '<li>Easy weeks (4, 8, 12): same weights, one fewer set.</li>' +
+    '<li>Warm-up sets are calculated from each lift\'s working weight: empty bar × 10, then roughly 50%, 70% and 85%, rounded to 2.5 kg.</li>' +
+    '<li>Plate loading assumes a 20 kg bar and one pair each of 1.25, 2.5, 5, 10, 20 and 25 kg plates. Heavy collars add weight.</li></ul>' +
+    '<h3>Knee</h3><ul>' +
+    '<li>Watch for swelling, a feeling of instability, or pain that lingers the next day. If any appear, hold weights and ride easy for a week.</li>' +
+    '<li>Avoid sudden maximal sprints, standing starts in very hard gears, and low-cadence hill grinding. Keep cadence above 80 rpm.</li>' +
+    '<li>If symptoms persist, see your physio.</li></ul>' +
+    '<h3>Fuelling and benchmarks</h3><ul>' +
+    '<li>For rides over about 90 minutes, bring food and water.</li>' +
+    '<li>In weeks 4, 8 and 12, repeat your 1 hr route at HR 125–145. Falling average HR or rising speed shows progress.</li></ul></div>' + dataCard();
+}
+
+function render() {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === state.tab ? "true" : "false"));
+  renderStrip();
+  if (state.tab === "week") renderWeek(); else if (state.tab === "all") renderAll(); else renderGuide();
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-week],[data-tab],[data-act]");
+  if (!t) return;
+  if (t.dataset.week) {
+    state.week = +t.dataset.week;
+    if (t.dataset.tab) state.tab = t.dataset.tab; else if (state.tab !== "week") state.tab = "week";
+    save(); render(); window.scrollTo({ top: 0 }); return;
+  }
+  if (t.dataset.tab) { state.tab = t.dataset.tab; save(); render(); window.scrollTo({ top: 0 }); return; }
+  const act = t.dataset.act;
+  if (act === "knee") { const L = wlog(state.week); L.knee = L.knee === t.dataset.v ? "" : t.dataset.v; save(); renderWeek(); return; }
+  if (act === "fill") {
+    const x = liftsFor(state.week).flatMap(s => s.ex).find(z => z.id === t.dataset.ex);
+    const log = llog(state.week, x.id, x.sets);
+    log.slice(0, x.sets).forEach(s => { if (x.bar) s.kg = fmt(x.kg); s.reps = String(x.reps); s.done = true; });
+    save(); const y = window.scrollY; renderWeek(); renderStrip(); window.scrollTo({ top: y }); return;
+  }
+  if (act === "export") exportCsv();
+  if (act === "backup") backup();
+  if (act === "restore") { const f = document.getElementById("restoreFile"); if (f) f.click(); }
+});
+
+document.addEventListener("input", handleField);
+document.addEventListener("change", e => { if (e.target.type === "checkbox") handleField(e); });
+
+function handleField(e) {
+  const el = e.target, t = el.dataset.t;
+  if (!t) return;
+  const w = state.week;
+  if (t === "notes") { wlog(w).notes = el.value; save(); return; }
+  const val = el.type === "checkbox" ? el.checked : el.value;
+  if (t === "ride") {
+    const L = rlog(w, el.dataset.r); L[el.dataset.f] = val; refreshRide(el.dataset.r);
+  } else if (t === "lift") {
+    const log = llog(w, el.dataset.ex, +el.dataset.n); const s = log[+el.dataset.i]; s[el.dataset.f] = val;
+    if (el.dataset.f === "done") el.closest(".set").classList.toggle("done", !!val);
+  }
+  save(); renderStrip();
+}
+
+/* ---------- backup, restore, export ---------- */
+async function saveFile(filename, data, mime) {
+  if (downloads) { try { await downloads.save({ filename, data }); } catch (e) {} return; }
+  try {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], { type: mime }));
+    a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  } catch (e) {}
+}
+function dataCard() {
+  const lb = state.lastBackup ? new Date(state.lastBackup).toLocaleDateString() : "never";
+  return '<div class="section-h"><h2>Your data</h2></div><div class="card">' +
+    '<p class="how">Your log is stored in this browser' + (dbRef ? " and in your account" : "") + '. Phones can clear browser storage, and a saved file may open in a different place each time, so back up after each week. Last backup: <b>' + lb + '</b>.</p>' +
+    '<div class="btnrow"><button class="primary" data-act="backup">Back up (JSON)</button><button class="ghost" data-act="restore">Restore from backup</button><button class="ghost" data-act="export">Download CSV</button></div>' +
+    '<input type="file" id="restoreFile" accept=".json,application/json" class="hide"></div>';
+}
+function backup() {
+  state.lastBackup = new Date().toISOString(); save();
+  saveFile("ride-lift-backup.json", JSON.stringify({ app: "ride-lift-tracker", v: 1, state }), "application/json");
+}
+document.addEventListener("change", e => {
+  if (e.target.id !== "restoreFile" || !e.target.files[0]) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const o = JSON.parse(fr.result), st = o && o.state;
+      if (!st || !st.logs) throw new Error("bad file");
+      if (!confirm("Replace the log on this device with the backup?")) return;
+      state = Object.assign({ week: 1, tab: "week", logs: {} }, st); save(); render(); setStatus("Backup restored");
+    } catch (err) { alert("That file isn't a backup from this tracker."); }
+  };
+  fr.readAsText(e.target.files[0]);
+});
+async function exportCsv() {
+  const rows = [["week", "type", "item", "set", "kg", "reps_or_seconds", "done", "time_min", "distance_km", "avg_hr", "max_hr"]];
+  const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  for (let w = 1; w <= 12; w++) {
+    const L = state.logs[w]; if (!L) continue;
+    Object.keys(L.rides).forEach(k => { const r = L.rides[k]; if (r.done || r.min || r.km || r.avg || r.max) rows.push([w, "ride", k, "", "", "", r.done ? 1 : 0, r.min, r.km, r.avg, r.max]); });
+    liftsFor(w).forEach(s => s.ex.forEach(x => { (L.lifts[x.id] || []).slice(0, x.sets).forEach((st, i) => { if (st.done || st.kg || st.reps) rows.push([w, "lift", x.name, i + 1, st.kg, st.reps, st.done ? 1 : 0, "", "", "", ""]); }); }));
+    if (L.notes || L.knee) rows.push([w, "note", L.knee, "", "", "", "", "", "", "", L.notes]);
+  }
+  await saveFile("ride-lift-log.csv", rows.map(r => r.map(q).join(",")).join("\n"), "text/csv");
+}
+
+/* ---------- start ---------- */
+const local = loadLocal();
+if (local) state = Object.assign(state, local);
+render();
+setStatus(localMsg());
+initRuntime();
+</script>
+</body>
+</html>
